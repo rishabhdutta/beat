@@ -129,8 +129,9 @@ Options:
                         &quot;info&quot;, or &quot;debug&quot;. Default is &quot;info&quot;.
 </pre></div>
 </div>
-<div class="section" id="init">
-<h3>Init<a class="headerlink" href="#init" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="initialise-a-new-modeling-project">
+<h2>Initialise a new Modeling Project<a class="headerlink" href="#initialise-a-new-modeling-project" title="Permalink to this headline">¶</a></h2>
 <p>Each modeling project is initiated with the “beat init” command. There are many options that define the type of optimization, datatypes to include, sampling algorithm to use, number of sources, velocity model to use for the Greens Function calculations etc …</p>
 <p>For example to optimize for a Full Moment Tensor for the Landers EQ by using seismic data, with station dependend Greens Functions for P and S waves with the default sampling algorithm (Sequential Monte Carlo) run:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">beat</span> <span class="n">init</span> <span class="n">LandersEQ</span> <span class="mi">1992</span><span class="o">-</span><span class="mi">06</span><span class="o">-</span><span class="mi">28</span> <span class="o">--</span><span class="n">datatypes</span><span class="o">=</span><span class="s1">&#39;seismic&#39;</span> <span class="o">--</span><span class="n">individual_gfs</span> <span class="o">--</span><span class="n">n_sources</span><span class="o">=</span><span class="mi">1</span> <span class="o">--</span><span class="n">source_type</span><span class="o">=</span><span class="n">MTSource</span> <span class="o">--</span><span class="n">min_mag</span><span class="o">=</span><span class="mi">7</span>
@@ -370,12 +371,13 @@ hyper_sampler_config: !beat.SamplerConfig
 <p>Most of the edits likely will be made in the ProblemConfig, particularly in the priors of the source parameters. For now only uniform priors are available. To change the bounds of the priors simply type other values into the ‘upper’ and ‘lower’ fields of each source parameter. Note: The test parameter needs to be within these bounds!
 To fix one or the other parameter in the optimizations the upper and lower bounds as well as the test value need to be set equal.</p>
 </div>
-<div class="section" id="import">
-<h3>import<a class="headerlink" href="#import" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="import-data">
+<h2>Import Data<a class="headerlink" href="#import-data" title="Permalink to this headline">¶</a></h2>
 <p>This is the step to import the user data into the program format and setup.</p>
 <div class="section" id="seismic-data">
-<h4>seismic data<a class="headerlink" href="#seismic-data" title="Permalink to this headline">¶</a></h4>
-<p>So far, unfortunately only the output of <a class="reference external" href="https://github.com/emolch/kiwi">autokiwi</a> is supported for automatic import of seismic data. Here the user will have to do some programing to get the respective data into the beat project.</p>
+<h3>seismic data<a class="headerlink" href="#seismic-data" title="Permalink to this headline">¶</a></h3>
+<p>So far, unfortunately only the output of <a class="reference external" href="https://github.com/emolch/kiwi">autokiwi</a> is supported for automatic import of seismic data.
+To get other types of data imported the user will have to do some programing.</p>
 <p>The following remarks are just bits and pieces that may be followed to write a script to bring the data into the necessary format.</p>
 <p>The seismic data may be saved using the package “pickle” as a file “seismic_data.pkl” containing a list of 2 lists: 1. list of “pyrocko.trace.Trace” objects alternating for (Z / T) rotated traces. 2. list of “pyrocko.model.Station” objects in the same order like the data traces.</p>
 <p>Pyrocko supports the import of various data formats and all the necessary tools to remove the instrument response and to convert the traces to displacement.
@@ -456,14 +458,133 @@ duration: 38.4
 </div>
 </div>
 </div>
-<div class="section" id="build-gfs">
-<h3>build_gfs<a class="headerlink" href="#build-gfs" title="Permalink to this headline">¶</a></h3>
-<p>To be written …</p>
+<div class="section" id="how-to-setup-a-custom-greens-function-store">
+<h2>How to setup a Custom Greens Function Store<a class="headerlink" href="#how-to-setup-a-custom-greens-function-store" title="Permalink to this headline">¶</a></h2>
+<p>This section covers how to generate a custom Greens Function store for seismic data at a location of choice.
+First a new model project has to be created to generate the configuration file. As we have no specific event in mind
+we skip the catalog search by not specifiying the date.:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">beat</span> <span class="n">init</span> <span class="n">Cascadia</span> <span class="o">--</span><span class="n">datatypes</span><span class="o">=</span><span class="s1">&#39;seismic&#39;</span> <span class="o">--</span><span class="n">mode</span><span class="o">=</span><span class="s1">&#39;geometry&#39;</span> <span class="o">--</span><span class="n">use_custom</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">To use the default ak135 earth-model in combination with crust2 one needs to execute above command without the ‘–use_custom’ flag.</p>
+</div>
+<p>This will create a beat project folder named ‘Cascadia’ and a configuration file ‘config_geometry.yaml’.
+In this configuration file we may now edit the reference location and the velocity model to the specific model we
+received from a colleague or found in the literature.:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="n">Cascadia</span>
+<span class="n">vi</span> <span class="n">config_geometry</span><span class="o">.</span><span class="n">yaml</span>
+</pre></div>
+</div>
+<p>This will open the configuration file in the vi editor.
+In lines 4-6 we find the reference event:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>event: !pf.Event
+  lat: 0.0
+  lon: 0.0
+</pre></div>
+</div>
+<p>In lines 160-165 we find the reference location:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>reference_location: !beat.heart.ReferenceLocation
+  lat: 10.0
+  lon: 10.0
+  elevation: 0.0
+  depth: 0.0
+  station: Store_Name
+</pre></div>
+</div>
+<p>The distance between these two locations determines the center point of the grid of Greens Functions that we want to calculate.
+For our example we set the reference location close to Vancouver, Canada as we want to study the Cascadia subduction zone.
+We ignore the ‘elevation’ and ‘depth’ attributes but we set the ‘station’ attribute, which determines the prefix of the name of the
+Greens Function store.</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>reference_location: !beat.heart.ReferenceLocation
+  lat: 49.28098
+  lon: -123.12244
+  elevation: 0.0
+  depth: 0.0
+  station: Vancouver
+</pre></div>
+</div>
+<p>The events we want to study are going to be around Vancouver island, and we set the reference event coordinates accordingly:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>event: !pf.Event
+  lat: 49.608839
+  lon: -125.647683
+</pre></div>
+</div>
+<p>So far we determined the general location of the store, but now we need to specify the spatial dimensions of the grid.
+In lines 154-158 we find the respective parameters:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">source_depth_min</span><span class="p">:</span> <span class="mf">0.0</span>
+<span class="n">source_depth_max</span><span class="p">:</span> <span class="mf">10.0</span>
+<span class="n">source_depth_spacing</span><span class="p">:</span> <span class="mf">1.0</span>
+<span class="n">source_distance_radius</span><span class="p">:</span> <span class="mf">20.0</span>
+<span class="n">source_distance_spacing</span><span class="p">:</span> <span class="mf">1.0</span>
+</pre></div>
+</div>
+<p>We are going to have stations in a distance of 500km and the events we are going to study are going to be located in a depth range of 5-40km depth so we update these values accordingly.:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">source_depth_min</span><span class="p">:</span> <span class="mf">5.0</span>
+<span class="n">source_depth_max</span><span class="p">:</span> <span class="mf">40.0</span>
+<span class="n">source_depth_spacing</span><span class="p">:</span> <span class="mf">1.0</span>
+<span class="n">source_distance_radius</span><span class="p">:</span> <span class="mf">500.0</span>
+<span class="n">source_distance_spacing</span><span class="p">:</span> <span class="mf">1.0</span>
+</pre></div>
+</div>
+<p>To decide on the resolution of the grid and the sample_rate (line 167) depends on the use-case and aim of the study.
+A description of the corner points to have in mind is <a class="reference external" href="https://pyrocko.org/docs/current/apps/fomosto/tutorial.html#considerations-for-real-world-applications">here</a>
+For example for a regional Full Moment Tensor inversion we want to optimize data up to 0.2 Hz. So a source grid of 1. km step size and 1. Hz ‘sample_rate’ seems a safe way to go.
+As we are in a regional setup we use QSEIS for the calculation of the Greens Functions, which we have to specify in line 166.:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">code</span><span class="p">:</span> <span class="n">qseis</span>
+</pre></div>
+</div>
+<p>In the lines 144-153 is the velocity model defined for which the Greens Functions are going to be calculated.:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">custom_velocity_model</span><span class="p">:</span> <span class="o">|</span><span class="mi">2</span>
+      <span class="mf">0.</span>             <span class="mf">5.8</span>            <span class="mf">3.46</span>           <span class="mf">2.6</span>         <span class="mf">1264.</span>           <span class="mf">600.</span>
+     <span class="mf">20.</span>             <span class="mf">5.8</span>            <span class="mf">3.46</span>           <span class="mf">2.6</span>         <span class="mf">1264.</span>           <span class="mf">600.</span>
+     <span class="mf">20.</span>             <span class="mf">6.5</span>            <span class="mf">3.85</span>           <span class="mf">2.9</span>         <span class="mf">1283.</span>           <span class="mf">600.</span>
+     <span class="mf">35.</span>             <span class="mf">6.5</span>            <span class="mf">3.85</span>           <span class="mf">2.9</span>         <span class="mf">1283.</span>           <span class="mf">600.</span>
+  <span class="n">mantle</span>
+     <span class="mf">35.</span>             <span class="mf">8.04</span>           <span class="mf">4.48</span>           <span class="mf">3.58</span>        <span class="mf">1449.</span>           <span class="mf">600.</span>
+     <span class="mf">77.5</span>            <span class="mf">8.045</span>          <span class="mf">4.49</span>           <span class="mf">3.5</span>         <span class="mf">1445.</span>           <span class="mf">600.</span>
+     <span class="mf">77.5</span>            <span class="mf">8.045</span>          <span class="mf">4.49</span>           <span class="mf">3.5</span>          <span class="mf">180.6</span>           <span class="mf">75.</span>
+    <span class="mf">100.</span>             <span class="mf">8.048</span>          <span class="mf">4.495</span>          <span class="mf">3.461</span>        <span class="mf">180.3</span>           <span class="mf">75.</span>
+</pre></div>
+</div>
+<p>The columns are ‘depth’, ‘p-wave velocity’, ‘s-wave velocity’, ‘density’, ‘Qp’, ‘Qs’. Here the values may be changed to a custom velociy.
+For example if we want to add another layer (from 20-25 km depth) between 20 and 35 km depth we would write:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">custom_velocity_model</span><span class="p">:</span> <span class="o">|</span><span class="mi">2</span>
+      <span class="mf">0.</span>             <span class="mf">5.8</span>            <span class="mf">3.46</span>           <span class="mf">2.6</span>         <span class="mf">1264.</span>           <span class="mf">600.</span>
+     <span class="mf">20.</span>             <span class="mf">5.8</span>            <span class="mf">3.46</span>           <span class="mf">2.6</span>         <span class="mf">1264.</span>           <span class="mf">600.</span>
+     <span class="mf">20.</span>             <span class="mf">6.1</span>            <span class="mf">3.54</span>           <span class="mf">2.7</span>         <span class="mf">1280.</span>           <span class="mf">600.</span>
+     <span class="mf">25.</span>             <span class="mf">6.1</span>            <span class="mf">3.54</span>           <span class="mf">2.7</span>         <span class="mf">1280.</span>           <span class="mf">600.</span>
+     <span class="mf">25.</span>             <span class="mf">6.5</span>            <span class="mf">3.85</span>           <span class="mf">2.9</span>         <span class="mf">1283.</span>           <span class="mf">600.</span>
+     <span class="mf">35.</span>             <span class="mf">6.5</span>            <span class="mf">3.85</span>           <span class="mf">2.9</span>         <span class="mf">1283.</span>           <span class="mf">600.</span>
+  <span class="n">mantle</span>
+     <span class="mf">35.</span>             <span class="mf">8.04</span>           <span class="mf">4.48</span>           <span class="mf">3.58</span>        <span class="mf">1449.</span>           <span class="mf">600.</span>
+     <span class="mf">77.5</span>            <span class="mf">8.045</span>          <span class="mf">4.49</span>           <span class="mf">3.5</span>         <span class="mf">1445.</span>           <span class="mf">600.</span>
+     <span class="mf">77.5</span>            <span class="mf">8.045</span>          <span class="mf">4.49</span>           <span class="mf">3.5</span>          <span class="mf">180.6</span>           <span class="mf">75.</span>
+    <span class="mf">100.</span>             <span class="mf">8.048</span>          <span class="mf">4.495</span>          <span class="mf">3.461</span>        <span class="mf">180.3</span>           <span class="mf">75.</span>
+</pre></div>
+</div>
+<p>Below the specified depth it is going to be combined with the earth-model specified in line 141.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>In case the standard earth-model should be used rather than a custom model the ‘custom_velocity_model’ attribute may be deleted.
+For the shallow crust one may decide to use the implemented crust2 model and to remove (potential) water layers. Lines 141-143:</p>
+<div class="last highlight-default"><div class="highlight"><pre><span></span><span class="n">earth_model_name</span><span class="p">:</span> <span class="n">ak135</span><span class="o">-</span><span class="n">f</span><span class="o">-</span><span class="n">average</span><span class="o">.</span><span class="n">m</span>
+<span class="n">use_crust2</span><span class="p">:</span> <span class="n">false</span>
+<span class="n">replace_water</span><span class="p">:</span> <span class="n">false</span>
+</pre></div>
+</div>
+</div>
+<p>Then, we have to specify under line 135 ‘store_superdir’ the path to the directory where to save the GreensFunction store on disk.
+One should have in mind that for large grids with high sample-rate the stores might become several GigaBytes in size and may calculate a very long time!</p>
+<p>Lastly, we start the store calculation with:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">beat</span> <span class="n">build_gf</span> <span class="n">Cascadia</span> <span class="o">--</span><span class="n">execute</span> <span class="o">--</span><span class="n">datatypes</span><span class="o">=</span><span class="s1">&#39;seismic&#39;</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="sample">
-<h3>sample<a class="headerlink" href="#sample" title="Permalink to this headline">¶</a></h3>
+<h2>sample<a class="headerlink" href="#sample" title="Permalink to this headline">¶</a></h2>
 <p>To be written …</p>
-</div>
 </div>
 </div>
 
@@ -481,13 +602,14 @@ duration: 38.4
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Detailed Installation instructions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="updating.html">Updating beat</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Getting started with BEAT</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#general">General</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#init">Init</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#import">import</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#build-gfs">build_gfs</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#sample">sample</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#general">General</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#initialise-a-new-modeling-project">Initialise a new Modeling Project</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#import-data">Import Data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#seismic-data">seismic data</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#how-to-setup-a-custom-greens-function-store">How to setup a Custom Greens Function Store</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#sample">sample</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Scenarios</a></li>
